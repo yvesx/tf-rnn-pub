@@ -100,15 +100,8 @@ for i,n_output in enumerate(outputs):
     else:
         neuron = n_output # rnn.dynamic_rnn
     seq_len = neuron.get_shape()[1].value - 1
-    if neuron.get_shape()[0].value == 1:
-        avgLosses.append(tf.reduce_mean( tf.reduce_mean(neuron[0,:,:],0) - tf.constant([3,3],dtype=tf.float32)))
-        lstLosses.append(tf.reduce_mean( neuron[0,seq_len,:] - tf.constant([3,3],dtype=tf.float32)))
-    else:
-        avgLosses.append(tf.reduce_mean( tf.reduce_mean(neuron,[1,0]) - tf.constant([3,3],dtype=tf.float32)))
-        lstLosses.append(tf.reduce_mean( tf.reduce_mean(neuron[:,seq_len,:],0) - tf.constant([3,3],dtype=tf.float32)))
-descs  = ["123000","123","123456,123000","123,123",
-         "123456,123456","123456,123000(seq_len set)","123456,123456(seq_len set)",
-         "123456,123000(dynamic)","123456,123456(dynamic)","123456,123000(dynamic,seq_len set)","123456,123456(dynamic,seq_len set)"]
+    avgLosses.append(tf.reduce_mean( tf.reduce_mean(neuron,[1,0]) - tf.constant([3,3],dtype=tf.float32)))
+    lstLosses.append(tf.reduce_mean( tf.reduce_mean(neuron[:,seq_len,:],0) - tf.constant([3,3],dtype=tf.float32)))
 opt = tf.train.GradientDescentOptimizer(0.1)
 params = tf.trainable_variables()
 avgOptims = []
@@ -120,11 +113,9 @@ for loss in lstLosses:
 
 sess = tf.Session()
 sess.run(tf.initialize_all_variables())
-#firstround = sess.run([optims[0],losses[0]])
-#writer = tf.train.SummaryWriter("/tmp/tflog", sess.graph)
 
 compareLoss = [] # losses to compare after 9 iterations
-for desc,optim,loss in zip(descs,avgOptims,avgLosses):
+for optim,loss in zip(avgOptims,avgLosses):
     printstuff = []
     for i in range(10):
         output = sess.run([optim,loss])
@@ -142,7 +133,7 @@ if FLAGS.rnn_type == "fw" or (FLAGS.rnn_type == "bi" and tf.__version__.startswi
 
 
 compareLoss = [] # losses to compare after 9 iterations
-for desc,optim,loss in zip(descs,lstOptims,lstLosses):
+for optim,loss in zip(lstOptims,lstLosses):
     printstuff = []
     for i in range(10):
         output = sess.run([optim,loss])
@@ -160,7 +151,4 @@ if FLAGS.rnn_type == "fw" or (FLAGS.rnn_type == "bi" and tf.__version__.startswi
 print "Passes all assertions"
 print "Therefore, once sequence_length is specified, there is no need to mask or select lastRelevant based on input data length. The computation graph is updated by sequence_length's automatically."
 
-a = tf.constant(10)
-b = tf.constant(32)
-print(sess.run(a + b))
 sess.close()
